@@ -20,6 +20,7 @@ $ pip install -r requirements.txt
 ```shell
 $ ./<location>/CarlaUE4.sh Town03
 ```
+* To go to simulation site, go towards the left side from the spawned location (using keys WASDQE and mouse pointer)
 
 # Training
 If you have a pretrained file
