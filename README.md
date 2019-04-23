@@ -42,3 +42,6 @@ $ python3 tester.py. --n_vehicles 10 --network <path to file>
 
 # GPU
 It is recommended to use GPU for training and inference.
+
+# Video
+https://www.youtube.com/watch?v=drVe_pNmuGc
