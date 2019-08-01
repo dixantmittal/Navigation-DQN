@@ -4,7 +4,7 @@ from simulator import *
 
 class SimulatorFactory(object):
     @staticmethod
-    def getInstance(className):
+    def getInstance(className, args):
         Logger.logger.info('Instance requested for class %s', className)
 
-        return globals()[className]()
+        return globals()[className](args)

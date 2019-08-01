@@ -47,8 +47,7 @@ class DQN(object):
         device = args.device
 
         simulator = SimulatorFactory.getInstance(args.simulator)
-        dStates = simulator.dState()
-        nStates = numpy.prod(dStates)
+        dStates = numpy.prod(simulator.dState())
         nActions = simulator.nActions()
 
         # Initialise Metrics
@@ -93,7 +92,7 @@ class DQN(object):
 
             # slice them to get state and actions
             batch = torch.Tensor(batch).to(device)
-            state, action, next_state, reward, terminate = torch.split(batch, [nStates, 1, nStates, 1, 1], dim=1)
+            state, action, next_state, reward, terminate = torch.split(batch, [dStates, 1, dStates, 1, 1], dim=1)
 
             action = to_one_hot(action, nActions).to(device)
 

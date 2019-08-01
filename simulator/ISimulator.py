@@ -2,6 +2,10 @@ from abc import abstractmethod
 
 
 class ISimulator(object):
+
+    def __init__(self, args):
+        self.args = args
+
     @abstractmethod
     def reset(self):
         raise NotImplementedError

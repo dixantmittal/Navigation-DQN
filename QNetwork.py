@@ -17,7 +17,7 @@ class QNetwork(nn.Module):
         self.din = din
         self.dout = dout
 
-        H, W, C = din
+        C, H, W = din
 
         self.net = nn.Sequential(
             nn.Conv2d(C, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3)),
@@ -50,8 +50,6 @@ class QNetwork(nn.Module):
         )
 
     def forward(self, x):
-        x = torch.transpose(x, 1, 3)
-        x = torch.transpose(x, 2, 3)
         return self.net(x)
 
     def save(self, filename):

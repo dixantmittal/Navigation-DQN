@@ -9,6 +9,9 @@ from SimulatorFactory import SimulatorFactory
 parser = argparse.ArgumentParser()
 parser.add_argument('--simulator', dest='simulator', help='Simulator class name', required=True)
 parser.add_argument('--network', dest='networkPath', help='Path to the save trained network', required=True)
+parser.add_argument('--vehicles', dest='nVehicles', help='Number of Vehicles', default=10, type=int)
+parser.add_argument('--host', dest='host', help='Host address of the carla server', default='localhost')
+parser.add_argument('--port', dest='port', help='Port of the carla server', default=2000, type=int)
 parser.add_argument('--lr', dest='lr', default=1e-4, help='', type=float)
 parser.add_argument('--eps', dest='eps', default=0.999, type=float)
 parser.add_argument('--batch', dest='batchSize', default=32, type=int)
@@ -16,7 +19,7 @@ parser.add_argument('--itr', dest='itr', default=0, type=int, help='Number of it
 parser.add_argument('--threads', dest='threads', default=4, type=int)
 parser.add_argument('--gamma', dest='gamma', default=0.99, type=float)
 parser.add_argument('--frequency', dest='frequency', default=50, type=int)
-parser.add_argument('--memory', dest='memory', default=100000, type=int, help='Buffer size (in number of experiences)')
+parser.add_argument('--memory', dest='memory', default=10000, type=int, help='Buffer size (in number of experiences)')
 parser.add_argument('--logger', dest='logger', help='Logging sensitivity', default='info')
 parser.add_argument('--test_size', dest='testSize', help='Size of test set', default=100, type=int)
 parser.add_argument('--device', dest='device', help='[cpu, cuda]', default='cpu')
@@ -61,7 +64,7 @@ if __name__ == '__main__':
     if args.checkpoints and not os.path.exists('checkpoints'):
         os.makedirs('checkpoints')
 
-    simulator = SimulatorFactory.getInstance(args.simulator)
+    simulator = SimulatorFactory.getInstance(args.simulator, args)
     trainer = DQN(QNetwork(simulator.dState(), simulator.nActions()))
     try:
         logger.info('Starting training.')

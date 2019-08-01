@@ -2,7 +2,6 @@
 IMG_WIDTH = 256
 IMG_HEIGHT = 144
 nFRAMES = 3
-nCHANNELS = 1
 
 # Car control parameters
 THROTTLE = [0, 0.5]
