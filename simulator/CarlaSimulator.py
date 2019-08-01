@@ -98,7 +98,6 @@ class CarlaSimulator(ISimulator):
         return self.state(), reward, self.collided, None
 
     def onCollision(self):
-        print('Collision')
         self.collided = True
 
     def new_frame(self, frame):
@@ -147,13 +146,14 @@ class CarlaSimulator(ISimulator):
         return rawState.reshape(-1, C, H, W)
 
     def destroy(self):
-        if self.collisionSensor is not None: self.collisionSensor.destroy()
-        if self.gridSensor is not None: self.gridSensor.destroy()
-        if self.av is not None: self.av.destroy()
+        if self.collisionSensor is not None:
+            self.collisionSensor.destroy()
+        if self.gridSensor is not None:
+            self.gridSensor.destroy()
 
-        # Destroy every spawned actor
-        for vehicle in self.vehicles:
-            if vehicle is not None: vehicle.destroy()
+        for actor in self.world.get_actors():
+            if 'vehicle' in actor.type_id or 'sensor' in actor.type_id:
+                actor.destroy()
 
         self.av = None
         self.gridSensor = None

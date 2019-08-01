@@ -28,7 +28,7 @@ class ExperienceCollector(object):
         gamma = self.args.gamma
         device = self.args.device
 
-        simulator = SimulatorFactory.getInstance(self.args.simulator)
+        simulator = SimulatorFactory.getInstance(self.args.simulator, self.args)
         buffer = ReplayMemory(self.args.memory)
 
         itr = 0

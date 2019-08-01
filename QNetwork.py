@@ -11,13 +11,13 @@ class Flatten(nn.Module):
 
 
 class QNetwork(nn.Module):
-    def __init__(self, din, dout):
+    def __init__(self, inDims, outDims):
         super(QNetwork, self).__init__()
 
-        self.din = din
-        self.dout = dout
+        self.inDims = inDims
+        self.outDims = outDims
 
-        C, H, W = din
+        C, H, W = inDims
 
         self.net = nn.Sequential(
             nn.Conv2d(C, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3)),
@@ -45,7 +45,7 @@ class QNetwork(nn.Module):
             nn.Linear(in_features=512, out_features=512),
             nn.ReLU(),
 
-            nn.Linear(in_features=512, out_features=dout)
+            nn.Linear(in_features=512, out_features=outDims)
 
         )
 

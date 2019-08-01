@@ -46,7 +46,7 @@ class DQN(object):
         gamma = args.gamma
         device = args.device
 
-        simulator = SimulatorFactory.getInstance(args.simulator)
+        simulator = SimulatorFactory.getInstance(args.simulator, args)
         dStates = numpy.prod(simulator.dState())
         nActions = simulator.nActions()
 
@@ -56,6 +56,14 @@ class DQN(object):
             'best_test_performance': -numpy.inf
         }
 
+        # initialise a test set
+        logger.info('Loading test set')
+        test = []
+        for i in range(args.testSize):
+            test.append(simulator.reset())
+        logger.info('Test set loaded!')
+        test = torch.Tensor(test).to(device)
+
         self.experienceCollectors = [ExperienceCollector(i, self.network, args) for i in range(args.threads)]
         self.threadSync = threading.Thread(target=self.syncNetwork, name='SyncThread')
         self.threadSync.start()
@@ -64,14 +72,6 @@ class DQN(object):
         # Wait while ReplayMemory collects some experiences.
         while ReplayMemory.memoryEmpty:
             time.sleep(0.1)
-
-        # initialise a test set
-        logger.info('Loading test set')
-        test = []
-        for i in range(args.testSize):
-            test.append(simulator.reset())
-        logger.info('Test set loaded!')
-        test = torch.Tensor(test).to(device)
 
         policyNetwork = self.network.to(device)
         targetNetwork = policyNetwork.copy().to(device)

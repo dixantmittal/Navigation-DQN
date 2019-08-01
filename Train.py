@@ -2,9 +2,9 @@ import argparse
 import os
 
 import Logger
+from SimulatorFactory import SimulatorFactory
 from DQN import DQN
 from QNetwork import QNetwork
-from SimulatorFactory import SimulatorFactory
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--simulator', dest='simulator', help='Simulator class name', required=True)
@@ -21,7 +21,7 @@ parser.add_argument('--gamma', dest='gamma', default=0.99, type=float)
 parser.add_argument('--frequency', dest='frequency', default=50, type=int)
 parser.add_argument('--memory', dest='memory', default=10000, type=int, help='Buffer size (in number of experiences)')
 parser.add_argument('--logger', dest='logger', help='Logging sensitivity', default='info')
-parser.add_argument('--test_size', dest='testSize', help='Size of test set', default=100, type=int)
+parser.add_argument('--test_size', dest='testSize', help='Size of test set', default=1, type=int)
 parser.add_argument('--device', dest='device', help='[cpu, cuda]', default='cpu')
 parser.add_argument('--checkpoints', dest='checkpoints', action='store_true', default=False, help='store checkpoints')
 args = parser.parse_args()
@@ -73,3 +73,4 @@ if __name__ == '__main__':
         logger.info('KeyboardInterrupt received. Trying to stop threads.')
     finally:
         trainer.stop()
+        simulator.destroy()
