@@ -36,6 +36,9 @@ class CarlaSimulator(ISimulator):
         self.world = carla.Client(args.host, args.port).get_world()
         self.bplib = self.world.get_blueprint_library()
 
+        #         self.waypoints = numpy.rint(numpy.unique(numpy.rint([[point.transform.location.x, point.transform.location.y, point.transform.rotation.yaw] for point in self.world.get_map().generate_waypoints(0.5) if -50 < point.transform.location.x < 50 and 90 < point.transform.location.y < 190]), axis=0))
+        self.destination = random.choice([[-6, 140, 90], [-50, 130, 180], [50, 137, 0]])
+
     def reset(self):
         self.destroy()
 
@@ -45,23 +48,13 @@ class CarlaSimulator(ISimulator):
         # Apply brake as default control
         self.av.apply_control(carla.VehicleControl(brake=1))
 
-        # Spawn Camera
-        camera_properties = self.bplib.find('sensor.camera.semantic_segmentation')
-        camera_properties.set_attribute('fov', '110')
-        camera_properties.set_attribute('image_size_x', str(IMG_WIDTH))
-        camera_properties.set_attribute('image_size_y', str(IMG_HEIGHT))
-        camera_properties.set_attribute('sensor_tick', str(1 / FREQUENCY))
-        self.gridSensor = self.world.spawn_actor(camera_properties, carla.Transform(carla.Location(0, 132, 40), carla.Rotation(roll=90, pitch=-90)), attach_to=self.av)
-        self.gridSensor.listen(lambda image: self.new_frame(image))
-
         # Choose a random number of NPC to spawn
         vehicles_to_spawn = random.randint(1, self.nVehicles)
         tries = 0
         while vehicles_to_spawn > 0 or tries < vehicles_to_spawn * 10:
 
             # Spawn NPC
-            vehicle = self.world.try_spawn_actor(self.bplib.find('vehicle.audi.a2'),
-                                                 random_location(numpy.random.rand()))
+            vehicle = self.world.try_spawn_actor(self.bplib.find('vehicle.audi.a2'), random_location(numpy.random.rand()))
 
             # if spawning failed, retry
             if vehicle is None:
@@ -79,6 +72,8 @@ class CarlaSimulator(ISimulator):
         # Wait for the simulator to get ready
         time.sleep(1 / FREQUENCY)
 
+        self.frames = [self.locations()] * nFRAMES
+
         return self.state()
 
     def step(self, a):
@@ -92,58 +87,39 @@ class CarlaSimulator(ISimulator):
         # sleep to observe action's effect
         time.sleep(1 / FREQUENCY)
 
-        # calculate reward (\Delta s + collision penalty)
+        # calculate reward
         reward = self.av.get_velocity().y * (-100 if self.collided else 1) - 1
+
+        self.frames.append(self.locations())
 
         return self.state(), reward, self.collided, None
 
     def onCollision(self):
         self.collided = True
 
-    def new_frame(self, frame):
-        # Parse the new BGRA frame
-        frame = numpy.asarray(frame.raw_data).reshape(IMG_HEIGHT, IMG_WIDTH, 4)
-
-        # filter out only R channel
-        frame = frame[:, :, 2]
-
-        # Mask pixels not containing cars or roads
-        mask = (frame == 7) + (frame == 10)
-        frame = frame * mask
-        frame = frame.astype(numpy.float)
-
-        # Change pixel label to -1 for Roads
-        frame[frame == 7] = -1
-
-        # Change pixel label to 1 for Cars
-        frame[frame == 10] = 1
-
-        # Append the new frame at the last
-        self.frames.append(frame)
-
-        # Duplicate the existing frames if size is less than nFRAMES
-        while len(self.frames) < nFRAMES:
-            self.frames.append(self.frames[-1])
-
-        # Trim the list to keep only last nFRAMES.
-        self.frames = self.frames[-nFRAMES:]
-
     def state(self):
-        # Convert the frames into array of shape (nFRAMES, IMG_HEIGHT, IMG_WIDTH)
-        return numpy.reshape(self.frames, (nFRAMES, IMG_HEIGHT, IMG_WIDTH))
+        self.frames = self.frames[-nFRAMES:]
+        return numpy.array(self.frames).astype(numpy.int8)
 
     def nActions(self):
         return len(THROTTLE)
 
     def dState(self):
-        return nFRAMES, IMG_HEIGHT, IMG_WIDTH
+        return nFRAMES, len(self.vehicles), 3
 
     def sampleAction(self):
         return numpy.random.randint(self.nActions())
 
+    def locations(self):
+        base = numpy.array([self.av.get_location().x, self.av.get_location().y, self.av.get_transform().rotation.yaw])
+        location = [[vehicle.get_location().x, vehicle.get_location().y, vehicle.get_transform().rotation.yaw] for vehicle in self.vehicles]
+        location.append(self.destination)
+        return (numpy.array(location) - base).astype(numpy.int8)
+
     def prettifyState(self, rawState):
-        C, H, W = self.dState()
-        return rawState.reshape(-1, C, H, W)
+        F, V, D = self.dState()
+        print(rawState.shape)
+        return rawState.reshape(-1, F, V, D)
 
     def destroy(self):
         if self.collisionSensor is not None:
@@ -152,7 +128,7 @@ class CarlaSimulator(ISimulator):
             self.gridSensor.destroy()
 
         for actor in self.world.get_actors():
-            if 'vehicle' in actor.type_id or 'sensor' in actor.type_id:
+            if 'vehicle' in actor.type_id:
                 actor.destroy()
 
         self.av = None

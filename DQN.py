@@ -98,6 +98,7 @@ class DQN(object):
 
             state = simulator.prettifyState(state).to(device)
             next_state = simulator.prettifyState(next_state).to(device)
+            policyNetwork = policyNetwork.to(device)
 
             # find the target value
             target = reward + terminate * gamma * targetNetwork(next_state).max(dim=1)[0].unsqueeze(dim=1)

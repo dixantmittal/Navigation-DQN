@@ -4,6 +4,14 @@ import torch.nn as nn
 import Logger
 
 
+def fill(t, i, j, a, b):
+    for m in range(a - 1, a + 2):
+        for n in range(b - 1, b + 2):
+            t[i, j, m, n] = 0.5
+    t[i, j, a, b] = 1
+    return t
+
+
 # Custom layer to flatten the output in 1-D vector
 class Flatten(nn.Module):
     def forward(self, input):
@@ -20,37 +28,37 @@ class QNetwork(nn.Module):
         C, H, W = inDims
 
         self.net = nn.Sequential(
-            nn.Conv2d(C, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3)),
+            nn.Conv2d(C, 32, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3)),
             nn.ReLU(),
             nn.MaxPool2d(kernel_size=3, stride=2),
-            nn.Conv2d(64, 64, kernel_size=(5, 5), stride=(1, 1), padding=(2, 2)),
+
+            nn.Conv2d(32, 64, kernel_size=(5, 5), stride=(1, 1), padding=(2, 2)),
             nn.ReLU(),
             nn.MaxPool2d(kernel_size=2, stride=2),
+
             nn.Conv2d(64, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1)),
             nn.ReLU(),
             nn.MaxPool2d(kernel_size=2, stride=2),
-            nn.Conv2d(128, 128, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1)),
-            nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2, stride=2),
-            nn.Conv2d(128, 256, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1)),
-            nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2, stride=2),
-            nn.Conv2d(256, 512, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1)),
-            nn.ReLU(),
-            nn.MaxPool2d(kernel_size=2, stride=2),
 
+            nn.AdaptiveAvgPool2d(output_size=(1, 1)),
             Flatten(),
-            nn.Linear(in_features=512, out_features=512),
-            nn.ReLU(),
-            nn.Linear(in_features=512, out_features=512),
+
+            nn.Linear(in_features=128, out_features=128),
             nn.ReLU(),
 
-            nn.Linear(in_features=512, out_features=outDims)
+            nn.Linear(in_features=128, out_features=outDims)
 
         )
 
     def forward(self, x):
-        return self.net(x)
+        t = torch.zeros(10, 3, 50, 101).to(x.get_device())
+        for i, b in enumerate(x):
+            for j, b_ in enumerate(b):
+                t = fill(t, i, j, 48, 50)
+                for b__ in b_:
+                    t = fill(t, i, j, b__[1], b__[0])
+
+        return self.net(t)
 
     def save(self, filename):
         # Switch network to CPU before saving to avoid issues.
