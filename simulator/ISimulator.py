@@ -30,3 +30,6 @@ class ISimulator(object):
     @abstractmethod
     def prettifyState(self, rawState):
         raise NotImplementedError
+
+    def destroy(self):
+        raise NotImplementedError

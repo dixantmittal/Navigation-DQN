@@ -12,10 +12,10 @@ from SimulatorFactory import SimulatorFactory
 logger = Logger.logger
 
 
-def to_one_hot(indices, n_classes):
-    one_hot = torch.zeros(len(indices), n_classes)
-    one_hot[torch.arange(len(indices)), indices.to(torch.long).squeeze()] = 1
-    return one_hot
+def toOneHot(indices, nClasses):
+    oneHot = torch.zeros(len(indices), nClasses)
+    oneHot[torch.arange(len(indices)), indices.to(torch.long).squeeze()] = 1
+    return oneHot
 
 
 class DQN(object):
@@ -47,7 +47,6 @@ class DQN(object):
         device = args.device
 
         simulator = SimulatorFactory.getInstance(args.simulator, args)
-        dStates = numpy.prod(simulator.dState())
         nActions = simulator.nActions()
 
         # Initialise Metrics
@@ -62,7 +61,6 @@ class DQN(object):
         for i in range(args.testSize):
             test.append(simulator.reset())
         logger.info('Test set loaded!')
-        test = torch.Tensor(test).to(device)
 
         self.experienceCollectors = [ExperienceCollector(i, self.network, args) for i in range(args.threads)]
         self.threadSync = threading.Thread(target=self.syncNetwork, name='SyncThread')
@@ -88,20 +86,22 @@ class DQN(object):
                 targetNetwork = policyNetwork.copy().to(device)
 
             # OPTIMIZE POLICY
-            batch = ReplayMemory.sample(args.batchSize)
+            state, action, nextState, reward, terminate = [], [], [], [], []
+            for e in ReplayMemory.sample(args.batchSize):
+                state.append(e.state)
+                action.append(e.action)
+                nextState.append(e.nextState)
+                reward.append(e.reward)
+                terminate.append(e.terminate)
 
-            # slice them to get state and actions
-            batch = torch.Tensor(batch).to(device)
-            state, action, next_state, reward, terminate = torch.split(batch, [dStates, 1, dStates, 1, 1], dim=1)
+            action = toOneHot(torch.Tensor(action), nActions).to(device)
+            reward = torch.Tensor(reward)
+            terminate = torch.Tensor(terminate)
 
-            action = to_one_hot(action, nActions).to(device)
-
-            state = simulator.prettifyState(state).to(device)
-            next_state = simulator.prettifyState(next_state).to(device)
             policyNetwork = policyNetwork.to(device)
 
             # find the target value
-            target = reward + terminate * gamma * targetNetwork(next_state).max(dim=1)[0].unsqueeze(dim=1)
+            target = reward + terminate * gamma * targetNetwork(nextState).max(dim=1)[0].unsqueeze(dim=1)
 
             # Calculate Q value
             predicted = (policyNetwork(state) * action).sum(dim=1).unsqueeze(dim=1)

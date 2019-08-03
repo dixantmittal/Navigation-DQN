@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 
 import Logger
+from constants import nFRAMES, IMG_HEIGHT, IMG_WIDTH
 
 
 def fill(t, i, j, a, b):
@@ -19,11 +20,12 @@ class Flatten(nn.Module):
 
 
 class QNetwork(nn.Module):
-    def __init__(self, inDims, outDims):
+    def __init__(self, inDims, outDims, args):
         super(QNetwork, self).__init__()
 
         self.inDims = inDims
         self.outDims = outDims
+        self.args = args
 
         C, H, W = inDims
 
@@ -51,10 +53,10 @@ class QNetwork(nn.Module):
         )
 
     def forward(self, x):
-        t = torch.zeros(10, 3, 50, 101).to(x.get_device())
+        t = torch.zeros(len(x), nFRAMES, IMG_HEIGHT, IMG_WIDTH).to(self.args.device)
         for i, b in enumerate(x):
             for j, b_ in enumerate(b):
-                t = fill(t, i, j, 48, 50)
+                t = fill(t, i, j, int(IMG_HEIGHT - 2), int(IMG_WIDTH / 2))
                 for b__ in b_:
                     t = fill(t, i, j, b__[1], b__[0])
 
@@ -72,7 +74,7 @@ class QNetwork(nn.Module):
 
     def copy(self, freeze=True):
         # Create a copy of self
-        copied = QNetwork(self.inDims, self.outDims)
+        copied = QNetwork(self.inDims, self.outDims, self.args)
         copied.load_state_dict(self.state_dict())
 
         # Freeze its parameters

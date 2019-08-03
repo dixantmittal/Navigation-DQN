@@ -2,9 +2,8 @@ import random
 import threading
 import time
 
-import numpy
-
 import Logger
+from Experience import Experience
 
 logger = Logger.logger
 
@@ -48,7 +47,7 @@ class ReplayMemory(object):
         # Combine the experience into 1 big array and store it on next position. Ordering is important
         ReplayMemory.lock.acquire()
         try:
-            self.buffer.append(numpy.hstack((state.reshape(-1), action, next_state.reshape(-1), reward, terminate)))
+            self.buffer.append(Experience(state, action, next_state, reward, terminate))
         finally:
             ReplayMemory.lock.release()
 
