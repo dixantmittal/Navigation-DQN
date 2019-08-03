@@ -56,9 +56,9 @@ class QNetwork(nn.Module):
         t = torch.zeros(len(x), nFRAMES, IMG_HEIGHT, IMG_WIDTH).to(self.args.device)
         for i, b in enumerate(x):
             for j, b_ in enumerate(b):
-                t = fill(t, i, j, int(IMG_HEIGHT - 2), int(IMG_WIDTH / 2))
+                t = fill(t, i, j, int(IMG_HEIGHT / 2), int(IMG_WIDTH / 2))
                 for b__ in b_:
-                    t = fill(t, i, j, b__[1], b__[0])
+                    t = fill(t, i, j, (int(IMG_HEIGHT / 2) - b__[1]) % (IMG_HEIGHT - 1), (b__[0] + int(IMG_WIDTH / 2)) % (IMG_WIDTH - 1))
 
         return self.net(t)
 

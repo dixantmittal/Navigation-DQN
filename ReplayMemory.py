@@ -57,7 +57,16 @@ class ReplayMemory(object):
         batch_size = min(batch_size, len(ReplayMemory.memory))
 
         # Return a sampled batch
-        return random.sample(ReplayMemory.memory, batch_size)
+        batch = random.sample(ReplayMemory.memory, batch_size)
+        state, action, nextState, reward, terminate = [], [], [], [], []
+        for e in batch:
+            state.append(e.state)
+            action.append(e.action)
+            nextState.append(e.nextState)
+            reward.append(e.reward)
+            terminate.append(e.terminate)
+
+        return state, action, nextState, reward, terminate
 
     def stop(self):
         self.shutdownSync = True

@@ -2,9 +2,9 @@ import argparse
 import os
 
 import Logger
-from SimulatorFactory import SimulatorFactory
 from DQN import DQN
 from QNetwork import QNetwork
+from SimulatorFactory import SimulatorFactory
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--simulator', dest='simulator', help='Simulator class name', required=True)
@@ -24,6 +24,7 @@ parser.add_argument('--logger', dest='logger', help='Logging sensitivity', defau
 parser.add_argument('--test_size', dest='testSize', help='Size of test set', default=1, type=int)
 parser.add_argument('--device', dest='device', help='[cpu, cuda]', default='cpu')
 parser.add_argument('--checkpoints', dest='checkpoints', action='store_true', default=False, help='store checkpoints')
+parser.add_argument('--load', dest='load', action='store_true', default=False, help='load pre-trained')
 args = parser.parse_args()
 
 Logger.setLevel(args.logger)
@@ -44,6 +45,7 @@ logger.info('List of Parameters:\n'
             'device: %s\n'
             'threads:%s\n'
             'checkpoints:%s\n'
+            'load:%s\n'
             'logger: %s\n',
             args.simulator,
             args.networkPath,
@@ -58,6 +60,7 @@ logger.info('List of Parameters:\n'
             args.device,
             args.threads,
             args.checkpoints,
+            args.load,
             args.logger)
 
 if __name__ == '__main__':
@@ -65,7 +68,10 @@ if __name__ == '__main__':
         os.makedirs('checkpoints')
 
     simulator = SimulatorFactory.getInstance(args.simulator, args)
-    trainer = DQN(QNetwork(simulator.dState(), simulator.nActions(), args))
+    network = QNetwork(simulator.dState(), simulator.nActions(), args)
+    if args.load:
+        network.load(args.networkPath)
+    trainer = DQN(network)
     try:
         logger.info('Starting training.')
         trainer.train(args)

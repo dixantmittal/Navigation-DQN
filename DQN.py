@@ -86,17 +86,11 @@ class DQN(object):
                 targetNetwork = policyNetwork.copy().to(device)
 
             # OPTIMIZE POLICY
-            state, action, nextState, reward, terminate = [], [], [], [], []
-            for e in ReplayMemory.sample(args.batchSize):
-                state.append(e.state)
-                action.append(e.action)
-                nextState.append(e.nextState)
-                reward.append(e.reward)
-                terminate.append(e.terminate)
+            state, action, nextState, reward, terminate = ReplayMemory.sample(args.batchSize)
 
             action = toOneHot(torch.Tensor(action), nActions).to(device)
-            reward = torch.Tensor(reward)
-            terminate = torch.Tensor(terminate)
+            reward = torch.Tensor(reward).to(device)
+            terminate = torch.Tensor(terminate).to(device)
 
             policyNetwork = policyNetwork.to(device)
 

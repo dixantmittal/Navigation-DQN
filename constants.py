@@ -1,6 +1,6 @@
 # Image parameters
 IMG_WIDTH = 100
-IMG_HEIGHT = 50
+IMG_HEIGHT = 100
 nFRAMES = 3
 
 # Car control parameters
