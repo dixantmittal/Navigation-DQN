@@ -2,9 +2,9 @@ import argparse
 import os
 
 import Logger
+from SimulatorFactory import SimulatorFactory
 from DQN import DQN
 from QNetwork import QNetwork
-from SimulatorFactory import SimulatorFactory
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--simulator', dest='simulator', help='Simulator class name', required=True)
