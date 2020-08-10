@@ -8,8 +8,18 @@ from constants import nFRAMES, IMG_HEIGHT, IMG_WIDTH
 def fill(t, i, j, a, b):
     for m in range(a - 1, a + 2):
         for n in range(b - 1, b + 2):
-            t[i, j, m, n] = 0.5
-    t[i, j, a, b] = 1
+            t[i, j, n, m] = 0.5
+    t[i, j, b, a] = 1
+    return t
+
+
+def fillPath(t, i, j, bX, bY, dX, dY):
+    while bX != dX:
+        t[i, j, bY, bX] = -1
+        bX = bX + int((dX - bX) / abs(dX - bX))
+    while bY != dY:
+        t[i, j, bY, bX] = -1
+        bY = bY + int((dY - bY) / abs(dY - bY))
     return t
 
 
@@ -53,12 +63,18 @@ class QNetwork(nn.Module):
         )
 
     def forward(self, x):
+        baseX, baseY = int(IMG_HEIGHT / 2), int(IMG_WIDTH / 2)
         t = torch.zeros(len(x), nFRAMES, IMG_HEIGHT, IMG_WIDTH).to(self.args.device)
         for i, b in enumerate(x):
             for j, b_ in enumerate(b):
-                t = fill(t, i, j, int(IMG_HEIGHT / 2), int(IMG_WIDTH / 2))
+                d = b_[-1]
+
+                t = fillPath(t, i, j, baseX, baseY, baseX + d[0], baseY - b[1])
+
+                b_ = b_[:-1]
+                t = fill(t, i, j, baseX, baseY)
                 for b__ in b_:
-                    t = fill(t, i, j, (int(IMG_HEIGHT / 2) - b__[1]) % (IMG_HEIGHT - 1), (b__[0] + int(IMG_WIDTH / 2)) % (IMG_WIDTH - 1))
+                    t = fill(t, i, j, (b__[0] + baseX) % (IMG_WIDTH - 1), (baseY - b__[1]) % (IMG_HEIGHT - 1))
 
         return self.net(t)
 
